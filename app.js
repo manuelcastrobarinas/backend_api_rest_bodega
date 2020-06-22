@@ -1,10 +1,16 @@
-var express=require('express');
-var BodyParser=require('body-parser');
-var app=express();
+const express=require('express');
+const BodyParser=require('body-parser');
+const app=express();
 
 
 // cargar archivos RUTAS
-var usuarioRutas=require('./routes/usuario');
+
+let bodegaRutas=require('./routes/bodega');
+let ciudadRutas=require('./routes/ciudad');
+let clienteRutas=require('./routes/cliente');
+let equipoRutas=require('./routes/equipo');
+let usuarioRutas=require('./routes/usuario');
+
 
 
 //MIDDLEWARES
@@ -21,7 +27,7 @@ app.use((req, res, next) => {
 });
 
 //RUTAS
-app.use('/api',usuarioRutas);
+app.use('/api',usuarioRutas,bodegaRutas,ciudadRutas,clienteRutas,equipoRutas);
 
 //EXPORTAR 
 module.exports= app;

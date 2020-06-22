@@ -1,5 +1,5 @@
 'use strict'
-let mongoose=require('mongoose');
+const mongoose=require('mongoose');
 let schema=mongoose.Schema;
 
 let ciudadSchema=schema({
