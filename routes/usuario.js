@@ -29,6 +29,7 @@ var mul_upload = multer({dest: './uploads/',storage});
 router.get('/home',usuarioController.usuario);
 router.post('/test',usuarioController.test);
 router.post('/register',usuarioController.saveUser);
+router.post('/login',usuarioController.loginUser);
 router.get('/user/:id?',usuarioController.getUser);
 router.get('/allUsers',usuarioController.getAllUsers);
 router.put('/user/:id',usuarioController.UpdateUser);

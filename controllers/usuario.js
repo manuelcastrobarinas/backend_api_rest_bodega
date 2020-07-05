@@ -1,7 +1,10 @@
 'use strict' 
-var usuario=require('../models/usuario');
-var fs = require('fs');
-
+const usuario=require('../models/usuario');
+const fs = require('fs');
+const jwt=require('jsonwebtoken');
+const bycrypt=require('bcryptjs');
+const { send } = require('process');
+const secret_key='secretkey123456';
 
 
 var ControllerUsuario = {
@@ -17,20 +20,67 @@ var ControllerUsuario = {
             message: 'soy el metodo test del controlador usuario',
         });
     },
+    
+    loginUser: function(req,res){
+        const userData ={
+            email:     req.body.email,
+            password:  req.body.password
+        }
+        usuario.findOne({email:userData.email},( err,user)=>{
+            if(err)    return res.status(500).send({ message: 'error de servidor'});
+            if(!user){ 
+                //email 
+                return res.status(404).send({message: 'no existe ese usuario'});
+           }else{
+               const resultPasword = bycrypt.compareSync(userData.password, user.password); //comparamos el resultado de la contraseña que se envia desde el front, y la que esta en back
+               if(resultPasword){
+                   const expiresIn = 24 * 60 * 60;
+                   const accessToken= jwt.sign({id: user.id}, secret_key, { expiresIn:expiresIn });
 
+                   const DataUser ={
+                    nombre: user.nombre,
+                    email: user.email,
+                    image: user.image,
+                    accessToken: accessToken,
+                    expiresIn: expiresIn,  
+                }
+                   res.status(200).send({ DataUser });
+               }
+               else{
+               // password wrong
+                   res.status(409).send({message: 'algo esta mal'});
+               }
+           } 
+
+        });
+   },
     saveUser: function(req,res){
         var user=new usuario();
         
         var params=req.body;
         user.nombre=params.nombre;
-        user.password=params.password;
+        user.password=bycrypt.hashSync(req.body.password);
         user.email=params.email;
         user.image=null;
        
         user.save((err,usuarioStored)=>{
+            if(err && err.code == 11000) return res.status(409).send('el email ya existe');
             if(err) return res.status(500).send({message: 'error al guardar el usuario'});
             if(!usuarioStored) return res.status(404).send({message: 'no se ha podido guardar el usuario'});
-            return res.status(200).send({user:usuarioStored});
+
+            const expiresIn = 24* 60*60;
+            const accessToken= jwt.sign({id: user.id },
+                secret_key, {
+                    expiresIn: expiresIn
+             });
+            const DataUser ={
+                nombre: user.nombre,
+                email: user.email,
+                image: user.image,
+                accessToken: accessToken,
+                expiresIn: expiresIn,  
+            }
+            return res.status(200).send({user:DataUser});
         });
     },
 
@@ -134,3 +184,69 @@ var ControllerUsuario = {
 }
 
 module.exports= ControllerUsuario;
+
+/*
+
+
+ var user=new usuario();
+        
+        var params=req.body;
+        user.nombre=params.nombre;
+        user.password=params.password;
+        user.email=params.email;
+        user.image=null;
+ 
+
+         user.save((err,usuarioStored)=>{
+            if(err) return res.status(500).send({message: 'error al guardar el usuario'});
+            if(!usuarioStored) return res.status(404).send({message: 'no se ha podido guardar el usuario'});
+            return res.status(200).send({user:usuarioStored});
+        });
+
+          usuario.findOne({email:user.email},( err,userData)=>{
+            if(err)    return res.status(500).send({ message: 'error de servidor'});
+            if(!userData){ 
+                //email 
+                return res.status(404).send({message: 'no existe ese usuario'});
+           }else{
+               usuario.findOne({password:user.password},(err,userDataPass)=>{
+                if(!userDataPass){
+                    res.status(409).send({message: 'algo esta mal'});
+                }else{
+                    const expiresIn = 24 * 60 * 60;
+                    const accessToken= jwt.sign({id: userData.id}, secret_key, { expiresIn:expiresIn });
+                    res.status(200).send({ user });
+                }
+               });  
+           } 
+        });
+
+
+
+  loginUser: function(req,res){
+        const userData ={
+            email:     req.body.email,
+            password:  req.body.password
+        }
+        usuario.findOne({email:userData.email},( err,user)=>{
+            if(err)    return res.status(500).send({ message: 'error de servidor'});
+            if(!user){ 
+                //email 
+                return res.status(404).send({message: 'no existe ese usuario'});
+           }else{
+               const resultPasword = userData.password;
+               if(resultPasword){
+                   const expiresIn = 24 * 60 * 60;
+                   const accessToken= jwt.sign({id: user.id}, secret_key, { expiresIn:expiresIn });
+                   res.status(200).send({ userData });
+               }
+               else{
+               // password wrong
+                   res.status(409).send({message: 'algo esta mal'});
+               }
+           } 
+
+        });
+   },
+
+ */ 
